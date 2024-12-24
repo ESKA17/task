@@ -1,4 +1,4 @@
-package kz.homework.task.model;
+package kz.homework.task.exception;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,20 +7,6 @@ public class ApiException extends RuntimeException {
     private static final long serialVersionUID = 6803391683871204802L;
     private final ApiError apiError;
     private final ErrorResponse errorResponse;
-
-    public ApiException(ApiError apiError, String message) {
-        super(apiError.name() + ": " + message);
-        this.errorResponse = new ErrorResponse(apiError.name(), message);
-        this.apiError = apiError;
-    }
-
-    public ApiException(ApiError apiError, String message, boolean addToErrorsData) {
-        this(apiError, message);
-        if (addToErrorsData) {
-            this.set(apiError.name(), message);
-        }
-
-    }
 
     public ApiException(ApiError apiError) {
         super(apiError.name() + ": " + apiError.getMessage());

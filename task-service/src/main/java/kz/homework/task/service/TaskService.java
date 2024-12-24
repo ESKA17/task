@@ -1,21 +1,21 @@
 package kz.homework.task.service;
 
-import kz.homework.task.entity.Task;
 import kz.homework.task.model.Status;
-import kz.homework.task.model.TaskDTO;
+import kz.homework.task.model.TaskRequest;
+import kz.homework.task.model.TaskResponse;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TaskService {
 
-    Task createTask(TaskDTO taskDTO);
+    TaskResponse createTask(TaskRequest taskRequest);
 
-    List<Task> getTasks(Status status, LocalDateTime createdAt);
+    List<TaskResponse> getTasks(Status status, LocalDate createdAt);
 
-    Task getTaskById(Integer id);
+    TaskResponse getTaskResponseById(Integer id);
 
-    Task updateTask(Integer id, TaskDTO taskDTO);
+    TaskResponse updateTask(Integer id, TaskRequest taskRequest);
 
     void deleteTask(Integer id);
 }

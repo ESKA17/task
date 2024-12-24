@@ -13,9 +13,9 @@ import jakarta.validation.constraints.Size;
 import kz.homework.task.model.Status;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -28,7 +28,7 @@ public class Task {
     private Integer id;
 
     @NotBlank
-    @Size(max = 255)
+    @Size(min = 1, max = 255)
     @Column
     private String title;
 
@@ -36,10 +36,10 @@ public class Task {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column
+    @Column(nullable = false)
     private Status status = Status.NEW;
 
-    @CreatedDate
     @Column
-    private LocalDateTime createdAt;
+    @CreationTimestamp
+    private LocalDate createdAt;
 }

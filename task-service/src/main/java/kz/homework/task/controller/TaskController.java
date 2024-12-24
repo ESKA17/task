@@ -6,10 +6,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
-import kz.homework.task.entity.Task;
-import kz.homework.task.model.ErrorResponse;
+import jakarta.validation.constraints.Min;
+import kz.homework.task.exception.ErrorResponse;
 import kz.homework.task.model.Status;
-import kz.homework.task.model.TaskDTO;
+import kz.homework.task.model.TaskRequest;
+import kz.homework.task.model.TaskResponse;
 import kz.homework.task.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,70 +25,70 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/tasks")
+@RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
 public class TaskController {
 
     private final TaskService taskService;
 
-    @Operation(summary = "Создать задачу")
+    @Operation(summary = "Create a task")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Операция завершена успешно"),
-            @ApiResponse(responseCode = "400", description = "Ошибка валидации одного из параметров запроса", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Ошибка сервера", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "201", description = "Operation completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error for one of the request parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
-    public ResponseEntity<Task> createTask(@Valid @RequestBody TaskDTO taskDTO) {
-        Task newTask = taskService.createTask(taskDTO);
+    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest taskResponse) {
+        TaskResponse newTask = taskService.createTask(taskResponse);
         return ResponseEntity.status(HttpStatus.CREATED).body(newTask);
     }
 
-    @Operation(summary = "Получение списка задач")
+    @Operation(summary = "Get list of tasks")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Операция завершена успешно"),
-            @ApiResponse(responseCode = "400", description = "Ошибка валидации одного из параметров запроса", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Ошибка сервера", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Operation completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error for one of the request parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping
-    public List<Task> getAllTasks(@RequestParam(required = false) Status status,
-                                  @RequestParam(required = false) LocalDateTime createdAt) {
+    @GetMapping("/filter")
+    public List<TaskResponse> getAllTasks(@RequestParam(required = false) Status status,
+                                          @RequestParam(required = false) LocalDate createdAt) {
         return taskService.getTasks(status, createdAt);
     }
 
-    @Operation(summary = "Получение задачи по ID")
+    @Operation(summary = "Get task by ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Операция завершена успешно"),
-            @ApiResponse(responseCode = "400", description = "Ошибка валидации одного из параметров запроса", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Ошибка сервера", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Operation completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error for one of the request parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
-    public Task getTaskById(@PathVariable Integer id) {
-        return taskService.getTaskById(id);
+    public TaskResponse getTaskById(@PathVariable @Min(value = 1, message = "Status ID must be greater than or equal to 1.") Integer id) {
+        return taskService.getTaskResponseById(id);
     }
 
-    @Operation(summary = "Обновление задачи")
+    @Operation(summary = "Update a task")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Операция завершена успешно"),
-            @ApiResponse(responseCode = "400", description = "Ошибка валидации одного из параметров запроса", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Ошибка сервера", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Operation completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error for one of the request parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable Integer id, @Valid @RequestBody TaskDTO taskDTO) {
-        return taskService.updateTask(id, taskDTO);
+    public TaskResponse updateTask(@PathVariable @Min(value = 1, message = "Status ID must be greater than or equal to 1.") Integer id, @Valid @RequestBody TaskRequest createTaskRequest) {
+        return taskService.updateTask(id, createTaskRequest);
     }
 
-    @Operation(summary = "Удаление задачи")
+    @Operation(summary = "Delete a task")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Операция завершена успешно"),
-            @ApiResponse(responseCode = "400", description = "Ошибка валидации одного из параметров запроса", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Ошибка сервера", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Operation completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error for one of the request parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
-    public void deleteTask(@PathVariable Integer id) {
+    public void deleteTask(@PathVariable @Min(value = 1, message = "Status ID must be greater than or equal to 1.") Integer id) {
         taskService.deleteTask(id);
     }
 }

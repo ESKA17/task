@@ -2,12 +2,13 @@ package kz.homework.task.handler;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ElementKind;
 import jakarta.validation.Path;
-import kz.homework.task.model.ApiError;
-import kz.homework.task.model.ApiException;
-import kz.homework.task.model.ErrorResponse;
+import kz.homework.task.exception.ApiError;
+import kz.homework.task.exception.ApiException;
+import kz.homework.task.exception.ErrorResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -20,10 +21,12 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -36,6 +39,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@Hidden
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -52,11 +56,10 @@ public class ControllerExceptionHandler {
 
         String exceptionMessage = exception.getMessage();
         String value = StringUtils.substringBetween(exceptionMessage, "\"", "\"");
-        String fieldName = StringUtils.substringBetween(exceptionMessage, "$", "`");
 
         Throwable cause = exception.getCause();
         if (exceptionMessage.contains("not one of the values accepted for Enum class")) {
-            errorResponse = new ErrorResponse(error.name(), "invalid value " + value + " for a field " + fieldName);
+            errorResponse = new ErrorResponse(error.name(), "invalid value " + value);
         } else if (cause instanceof JsonMappingException jsonMappingException) {
             String invalidDataFieldNames = jsonMappingException.getPath().stream().map(JsonMappingException.Reference::getFieldName).filter(Objects::nonNull).collect(Collectors.joining("."));
             errorResponse = new ErrorResponse(error.name(), String.format("invalid value for a field: '%s'", invalidDataFieldNames));
@@ -115,8 +118,29 @@ public class ControllerExceptionHandler {
 
     @ExceptionHandler({NoResourceFoundException.class})
     public ResponseEntity<ErrorResponse> handleNoResourceError(NoResourceFoundException exception) {
-        log.error(exception.getLocalizedMessage(), exception);
         ApiError error = ApiError.RESOURCE_NOT_FOUND;
+
+        ErrorResponse errorResponse = new ErrorResponse(error.name(), exception.getMessage());
+        errorResponse.setOrigin(TASKS_SERVICE);
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(error.getStatus()));
+    }
+
+    @ExceptionHandler({HandlerMethodValidationException.class})
+    public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(HandlerMethodValidationException exception) {
+        log.error(exception.getLocalizedMessage(), exception);
+        ApiError error = ApiError.BAD_REQUEST;
+
+        ErrorResponse errorResponse = new ErrorResponse(error.name(), exception.getReason());
+        errorResponse.setOrigin(TASKS_SERVICE);
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(error.getStatus()));
+    }
+
+    @ExceptionHandler({HttpRequestMethodNotSupportedException.class})
+    public ResponseEntity<ErrorResponse> handleWrongMethodError(HttpRequestMethodNotSupportedException exception) {
+        log.error(exception.getLocalizedMessage(), exception);
+        ApiError error = ApiError.NOT_ALLOWED;
 
         ErrorResponse errorResponse = new ErrorResponse(error.name(), exception.getMessage());
         errorResponse.setOrigin(TASKS_SERVICE);
